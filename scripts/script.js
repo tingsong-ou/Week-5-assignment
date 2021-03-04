@@ -1,15 +1,18 @@
-const margins = {t: 50, r: 50, b: 50, l: 50};
-const SVGsize = {w: window.innerWidth*0.8, h: window.innerHeight*0.8};
+const margins = {t: 50, r: 50, b: 50, l: 70};
+const width = document.querySelector('svg').clientWidth;
+const height = document.querySelector('svg').clientHeight;
+const SVGsize = {w: width, h: height};
+
 const svg = d3.select('svg')
     .attr('width', SVGsize.w)
     .attr('height', SVGsize.h);
+
 const containerG = svg.append('g')
     .attr('transform', `translate(${margins.l}, ${margins.t})`);
 const dispatch = d3.dispatch('updateChart');
 
 
-let data, scaleY, scaleX, scaleDuration;
-
+let data;
 
 Promise.all([
 d3.csv('data/population.csv'),
@@ -31,11 +34,9 @@ chart.data(data)
     .dispatch(dispatch)
     .draw();
 
-
 //CHANGING MODE
 
     d3.selectAll('button').on('click', function(e){
-
         d3.selectAll('button').classed('active', false);        
         d3.select(this).classed('active', true);
 
@@ -50,8 +51,8 @@ chart.data(data)
         dispatch.call('updateChart', this, mode, region);
     });
 
-
 //CHANGING CATEGORY
+
     d3.selectAll('select').on('change', function(e){
         let region = d3.select(this).property('value');
         let mode = d3.select('.active').property('value');
@@ -110,10 +111,10 @@ function updateMenu(data, mode = 'continent'){
         let options = new Set(data.map(d => d.country));
         options = Array.from(options);
         addOptions(options);
-
     }
 }
 
+//APPENDING OPTIONS
 function addOptions(data){
     let selects = d3.selectAll('#options');
     let addOption = selects.selectAll('.items')

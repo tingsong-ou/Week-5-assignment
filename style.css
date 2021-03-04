@@ -1,5 +1,5 @@
 html{
-    background: #eee;
+    background: rgb(237, 237, 237);
     padding: 0px;
     margin: 0px;
     font-family:monospace;
@@ -15,22 +15,31 @@ button{
     box-shadow: 2px 2px rgb(147, 147, 147);
 }
 
+select{
+    outline: none;
+    width:300px;
+}
+
 button, select, label{
     font-family:monospace;
     font-size: 14px;
 }
 
-select{
-    outline: none;
-}
-
 svg {
     display: block;
+    width: 90vw;
+    height: 80vh;
+    margin-top: 10px;
     margin-left: auto;
     margin-right: auto;
     max-width: 1100px;
 }
 
+.label-x, .label-y{
+    font-size: 16px;
+    font-weight: 800;
+    text-anchor: middle;
+}
 
 .title, .selections, .buttons {
     width: 800px;
@@ -60,6 +69,8 @@ svg {
     transform: translate(6px, 3px);
 }
 
-select{
-    width:300px;
+.tooltip{
+    position:absolute;
+    visibility: hidden;
+    font-size: 15px;
 }

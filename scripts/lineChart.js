@@ -63,6 +63,10 @@ function lineChart(){
         return this;
     }
 
+    this._duration = 600;
+    this._delay = 50;
+    this._pathColor = ['#6fa1e3', '#f5a4be'];
+
 //--------FUNTIONS--------
 
     //--------DRAWING CHARTS--------
@@ -101,28 +105,27 @@ function lineChart(){
             .attr('d', d => pathFn(d.values))
             .attr('class', 'paths')
             .attr('fill', 'none')
-            .attr('stroke', d => {
-                if(d.isDeveloped) return '#6fa1e3' // #5692bf
-                else return '#f5a4be';
-                // #f590a2 #f2b55e
-            })
+            .attr('stroke', d => d.isDeveloped ? this._pathColor[0]: this._pathColor[1])
             .attr('stroke-width', '2px')
             .attr('stroke-dasharray', '0, 1')
             .style("mix-blend-mode", "multiply")
             .transition()
-            .duration(600)
+            .duration(this._duration)
             .attrTween('stroke-dasharray', this.dashTween)
-            .delay((d, i) => i * 50);
+            .delay((d, i) => i * this._delay);
         
         this.drawAxes(xScale, yScale);
+        this.tooltip();
+        this.label();
+        this.legends();
     }
 
-
+    //CREATING AXES
     this.drawAxes = function(xScale, yScale){
         this.drawAxisX(xScale);
         this.drawAxisY(yScale);
     }
-
+    //creating x axis
     this.drawAxisX = function(xScale){
         let axis = d3.axisBottom(xScale)
             .tickFormat(d => +d)
@@ -138,10 +141,10 @@ function lineChart(){
         axisG
             .attr('transform', `translate(0, ${this._chartSize.h})`)
             .transition()
-            .duration(600)
+            .duration(this._duration)
             .call(axis);
     }
-
+    //creating y axis
     this.drawAxisY = function(yScale){
         let axis = d3.axisLeft(yScale)
             .tickFormat(d3.format('.2s'));
@@ -153,17 +156,65 @@ function lineChart(){
             .classed('axis-y', true);
         
         axisG.transition()
-            .duration(600)
+            .duration(this._duration)
             .call(axis);
     }
 
-    //Line Animation, Reference: https://observablehq.com/@mbostock/sea-ice-extent-1978-2017
+    //APPENDING LABELS
+    this.label = function(){
+        let labelX = this._sel.selectAll('.label-x').data([1]);
+        let labelY = this._sel.selectAll('.label-y').data([1]);
+
+        labelX
+            .join('text')
+            .classed('label label-x', true)
+            .attr('x', this._chartSize.w/2)
+            .attr('y', this._chartSize.h + this._margin.b/2)
+            .style('dominant-baseline', 'text-before-edge')
+            .text('Year');
+
+        labelY
+            .join('text')
+            .classed('label label-y', true)
+            .attr('x', -this._chartSize.h/2)
+            .attr('y', -this._margin.l)
+            .attr('transform', 'rotate(-90)')
+            .style('dominant-baseline', 'text-before-edge')
+            .text('Population');
+    }
+
+    //APPENDING LEGENDS
+    this.legends = function(){
+        let place = [this._chartSize.w/2 - 250, this._chartSize.w/2];
+        let length = 80;
+        let legends = this._sel.selectAll('.legend').data([0,1]);
+        let legendTexts = this._sel.selectAll('.legend-text').data(['developed country','developing country']);
+        
+        legends
+            .join('line')
+            .classed('legend', true)
+            .style('stroke', d => `${this._pathColor[d]}`)
+            .style('stroke-width', '2px')
+            .attr('x1', d => place[d])
+            .attr('y1', -this._margin.t/2)
+            .attr('x2', d => place[d] + length)
+            .attr('y2', -this._margin.t/2);
+
+        legendTexts
+            .join('text')
+            .classed('legend-text', true)
+            .attr('x', (d, i) => place[i] + length + 10)
+            .attr('y', -this._margin.t/2 + 3)
+            .text(d => d);
+    }
+
+    //LINE ANIMATION, Reference: https://observablehq.com/@mbostock/sea-ice-extent-1978-2017
     this.dashTween = function(){
         let length = this.getTotalLength();
         return d3.interpolate(`0,${length}`, `${length},${length}`);
     }
 
-    //remapping data
+    //REMAPPING DATA
     this.remapData = function(data) {
         //creating an array of years
         let years = new Set(Object.keys(this._data[0]));
@@ -174,15 +225,13 @@ function lineChart(){
             .map(d => +d);
         
         this._years = years;
-
         let remappedData = {years:[], series:[]};
-
         remappedData.years = remappedData.years.concat(years);
 
         for(d of data){
             let element = {};
             element.continent = d.continent;
-            element.contry = d.country;
+            element.country = d.country;
             element.subRegion = d.subRegion;
             element.isDeveloped = d.isDeveloped;
             element.values = [];
@@ -193,5 +242,32 @@ function lineChart(){
             remappedData.series.push(element);
         }
         return remappedData;
+    }
+
+    //CREATING TOOLTIP
+    this.tooltip = function() {
+
+        let tooltip = d3.select('.container')
+            .append('div')
+            .attr('class', 'tooltip');  
+
+        let paths = this._sel.selectAll('.paths').on('mouseover', function(e, d){
+            
+            tooltip.style('visibility', 'visible')
+                .style('left', e.pageX + 15 + 'px')
+                .style('top', e.pageY - 20 + 'px')
+                .html(`<b>${d.country}</b>`);
+
+            paths.style('opacity', 0.2);
+
+            d3.select(this)
+                .style('opacity', 1.0)
+                .attr('stroke-width', '3px');
+
+        }).on('mouseout',function(e, d){
+            tooltip.style('visibility', 'hidden');
+            paths.style('opacity', 1.0)
+                .attr('stroke-width', '2px');
+        })
     }
 }
